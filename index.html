@@ -1,4 +1,11 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+.public-messages{margin-top:28px;padding:24px}
+.public-messages h3{margin:0 0 6px}
+.public-messages .public-message{padding:16px 0;border-top:1px solid rgba(150,170,255,.22)}
+.public-messages .public-message p{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0}
+.public-messages .public-message small{color:#aebce0}
+.public-messages .public-empty{color:#aebce0}
+</style></head><body>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -315,6 +322,11 @@ footer{background:linear-gradient(180deg,transparent,rgba(12,29,68,.55));border-
    <p id="st" role="status"></p>
   </form>
  </div>
+ <div class="glass public-messages" id="approved-messages" aria-live="polite">
+  <h3>Messages from visitors</h3>
+  <p class="lead">Messages approved for public display.</p>
+  <div id="approved-message-list"><p>Loading messages…</p></div>
+ </div>
 </section>
 </main>
 
@@ -431,6 +443,29 @@ $("#f").addEventListener("submit", async e=>{
  st.textContent="Thank you, "+v("name")+". Your message has been sent successfully.";
  f.reset();
 });
+
+// Show only messages explicitly approved by the admin. Visitor email is never selected or displayed.
+(async function loadApprovedMessages(){
+ const host=$("approved-message-list");
+ try{
+  const {data,error}=await supabaseClient.from("messages")
+   .select("name,subject,message,created_at")
+   .eq("is_approved",true).order("created_at",{ascending:false}).limit(30);
+  if(error) throw error;
+  host.replaceChildren();
+  if(!data || data.length===0){const p=document.createElement("p");p.className="public-empty";p.textContent="No public messages yet.";host.append(p);return;}
+  for(const item of data){
+   const article=document.createElement("article");article.className="public-message";
+   const heading=document.createElement("h4");heading.textContent=item.subject || "Visitor message";
+   const body=document.createElement("p");body.textContent=item.message || "";
+   const meta=document.createElement("small");meta.textContent="From "+(item.name || "Visitor")+(item.created_at?" · "+new Date(item.created_at).toLocaleDateString():"");
+   article.append(heading,body,meta);host.append(article);
+  }
+ }catch(error){
+  console.error("Could not load approved messages:",error);
+  host.textContent="Public messages are temporarily unavailable.";
+ }
+})();
 </script>
 </body>
 </html>

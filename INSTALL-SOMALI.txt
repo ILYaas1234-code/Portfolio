@@ -1,14 +1,11 @@
-ILYAS PORTFOLIO - ADMIN DASHBOARD UPDATE
+TALLAABOOYINKA — FARriimaha LA ANSIXIYEY
 
-1. Extract this ZIP.
-2. Open your GitHub repository: ILYaas1234-code/Portfolio.
-3. Choose Add file > Upload files.
-4. Upload ONLY admin.html from this folder, replacing the existing admin.html.
-5. Commit changes directly to main.
+1. Ka samee backup repository-ga GitHub ka hor intaadan beddelin files.
+2. GitHub Portfolio repository: ku beddel index.html file-ka cusub ee ZIP-kan ku jira.
+3. Ku beddel admin.html iyo supabase-config.js oo keliya haddii aad rabto noocyada ZIP-kan.
+4. Supabase SQL Editor: fur SUPABASE-PUBLIC-MESSAGES.sql, copy garee, kuna Run garee.
+5. Hubi in Authentication user-ka admin uu yahay ilyaasyaxye11@gmail.com. Ha wadaagin password-ka.
+6. Website-ka fur, dir fariin tijaabo ah, Admin Dashboard ka gal, riix Approve.
+7. Ku noqo Contact page oo Refresh samee; fariinta la ansixiyey waa inay muuqataa. Email-ka booqdaha lama soo bandhigayo.
 
-IMPORTANT:
-- Do NOT replace or upload supabase-config.js from this package. Keep the working supabase-config.js already in your GitHub repository because it contains your actual Supabase Project URL and Publishable Key.
-- Never put the Supabase Secret Key in GitHub or browser JavaScript.
-- Admin login email expected by this page: ilyaasyaxye11@gmail.com
-- Supabase RLS SELECT, UPDATE and DELETE policies must use exactly this same email.
-- The page includes approve/hide, read/unread, search, refresh and delete controls.
+AMMAAN: supabase-config.js wuxuu ka kooban yahay Publishable key oo browser-ka loo adeegsan karo marka RLS sax yahay. WALIGAA ha gelin Supabase Secret/Service Role key GitHub ama HTML/JS browser-ka.
