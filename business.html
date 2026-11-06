@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nova Analytics | Business dashboard demo</title>
+<style>
+:root{--bg:#0a0f24;--sb:#0d1331;--card:#131a3d;--card2:#18214c;--ln:#262f63;--tx:#eef0ff;--mut:#9aa3d4;--p:#8b5cf6;--p2:#a78bfa;--p3:#6d3df0;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185;--cy:#38bdf8;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(900px 500px at 90% -10%,rgba(139,92,246,.18),transparent 60%),var(--bg);color:var(--tx);font:400 15px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
+button,input,select{font:inherit;color:inherit}
+a{color:#c9b8ff}
+:focus-visible{outline:2px solid var(--p2);outline-offset:2px}
+.demo{background:#1b1448;border-bottom:1px solid var(--ln);font-size:.84rem;padding:7px 16px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#d9ceff}
+.app{display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 34px)}
+aside{background:linear-gradient(180deg,var(--sb),#0a1030);border-right:1px solid var(--ln);padding:22px 14px;display:flex;flex-direction:column;gap:6px}
+.lg{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem;margin:0 10px 22px}
+.lg i{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--p2),var(--p3));box-shadow:0 0 20px rgba(139,92,246,.6)}
+.tab{display:flex;align-items:center;gap:12px;background:none;border:0;text-align:left;padding:11px 14px;border-radius:12px;cursor:pointer;color:var(--mut);font-weight:600;transition:background .2s,color .2s}
+.tab svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab:hover{background:rgba(139,92,246,.14);color:#fff}
+.tab[aria-selected=true]{background:linear-gradient(135deg,var(--p3),var(--p));color:#fff;box-shadow:0 8px 24px rgba(109,61,240,.45)}
+.me{margin-top:auto;display:flex;gap:10px;align-items:center;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--ln);font-size:.88rem}
+.me b{display:block}.me span{color:var(--mut);font-size:.8rem}
+.av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:800;background:linear-gradient(135deg,var(--p2),var(--cy));color:#0a0f24;flex:none}
+main{padding:24px clamp(16px,3vw,34px);min-width:0}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.hd h1{margin:0;font-size:1.6rem;letter-spacing:-.02em}
+.hd p{margin:0;color:var(--mut)}
+.seg{display:inline-flex;background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:3px}
+.seg button{background:none;border:0;padding:7px 14px;border-radius:9px;cursor:pointer;color:var(--mut);font-weight:600}
+.seg button[aria-pressed=true]{background:var(--p);color:#fff}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:16px}
+.k,.c{background:linear-gradient(145deg,var(--card2),var(--card));border:1px solid var(--ln);border-radius:18px;padding:18px;transition:border-color .2s,box-shadow .2s}
+.k:hover,.c:hover{border-color:rgba(167,139,250,.55);box-shadow:0 14px 40px rgba(109,61,240,.2)}
+.k small{color:var(--mut)}.k b{display:block;font-size:1.75rem;letter-spacing:-.02em}
+.k em{font-style:normal;font-size:.84rem;font-weight:700}
+.up{color:var(--ok)}.dn{color:var(--bad)}
+.g2{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.c h2{margin:0 0 12px;font-size:1rem;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.c h2 small{color:var(--mut);font-weight:400}
+.chart{position:relative}
+.tip{position:absolute;pointer-events:none;background:#0a0f24;border:1px solid var(--p2);border-radius:10px;padding:6px 10px;font-size:.82rem;white-space:nowrap;opacity:0;transform:translate(-50%,-110%);transition:opacity .15s;z-index:2}
+.btn{border:0;background:linear-gradient(135deg,var(--p3),var(--p));color:#fff;border-radius:12px;padding:10px 16px;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(139,92,246,.5)}
+.btn.s{background:var(--card);border:1px solid var(--ln)}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.tools input,.tools select,.f input,.f select{padding:10px 12px;border-radius:12px;border:1px solid var(--ln);background:#0a0f24}
+.tools input{flex:1;min-width:180px}
+.sc{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:11px 10px;border-bottom:1px solid var(--ln);white-space:nowrap}
+th{color:var(--mut);font-weight:600;font-size:.86rem}
+th button{background:none;border:0;cursor:pointer;color:inherit;font-weight:inherit}
+tbody tr:hover{background:rgba(139,92,246,.08)}
+.pill{padding:3px 12px;border-radius:999px;font-size:.8rem;font-weight:700;border:0;cursor:pointer}
+.pill.Active,.pill.Delivered{background:rgba(52,211,153,.16);color:var(--ok)}
+.pill.Pending,.pill.Processing,.pill.Lead{background:rgba(251,191,36,.16);color:var(--warn)}
+.pill.Inactive,.pill.Cancelled{background:rgba(251,113,133,.16);color:var(--bad)}
+.pill.Shipped{background:rgba(56,189,248,.16);color:var(--cy)}
+.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:6px}
+.msg{color:var(--bad);min-height:1.4em;margin:6px 0;font-weight:600}
+.x{background:none;border:0;color:var(--mut);cursor:pointer;font-size:1.1rem}
+.x:hover{color:var(--bad)}
+.stat{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.stat span{padding:6px 14px;border-radius:12px;background:var(--card);border:1px solid var(--ln);font-size:.9rem}
+.stat b{margin-left:6px}
+.hide{display:none}
+.lgd{display:grid;gap:6px;margin-top:8px;font-size:.9rem}
+.lgd i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px}
+@media(max-width:900px){.app{grid-template-columns:1fr}aside{flex-direction:row;overflow-x:auto;padding:12px;align-items:center}.lg{margin:0 10px 0 4px}.me{display:none}.g2,.g3{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="demo"><span>Demo project: every figure, customer and order is made-up sample data.</span><a href="index.html">Back to portfolio</a></div>
+<div class="app">
+ <aside role="tablist" aria-label="Sections"><div class="lg"><i></i>Nova</div>
+  <button class="tab" role="tab" data-v="ov" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6V4h-6zM4 20h6v-3H4z"/></svg>Overview</button>
+  <button class="tab" role="tab" data-v="sa" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 18l5-6 4 3 7-9M16 6h4v4"/></svg>Sales</button>
+  <button class="tab" role="tab" data-v="cu" aria-selected="false"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0M16 5a3.5 3.5 0 010 7M18 14a6 6 0 013.5 6"/></svg>Customers</button>
+  <button class="tab" role="tab" data-v="or" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M5 7h14l-1.5 12h-11zM9 7a3 3 0 016 0"/></svg>Orders</button>
+  <div class="me"><div class="av">AM</div><div><b>Amina Hassan</b><span>Finance lead (sample)</span></div></div>
+ </aside>
+ <main>
+  <section id="ov">
+   <div class="hd"><div><h1>Overview</h1><p>Performance across the business this year</p></div><div class="seg" role="group" aria-label="Range"><button data-r="6" aria-pressed="true">6 months</button><button data-r="12" aria-pressed="false">12 months</button></div></div>
+   <div class="kp" id="kp"></div>
+   <div class="g2"><div class="c"><h2>Revenue <small id="rt"></small></h2><div class="chart" id="rv"></div></div><div class="c"><h2>Sales by category</h2><div id="dn"></div><div class="lgd" id="lgd"></div></div></div>
+   <div class="c"><h2>Monthly performance <small>Revenue against target</small></h2><div class="chart" id="mp"></div></div>
+  </section>
+  <section id="sa" class="hide">
+   <div class="hd"><div><h1>Sales</h1><p>Sales statistics by region and product</p></div></div>
+   <div class="g3"><div class="c"><h2>Sales by region</h2><div id="rg"></div></div><div class="c"><h2>Top products <small>Units sold</small></h2><div id="tp"></div></div></div>
+   <div class="c"><h2>Sales statistics</h2><div class="stat" id="ss"></div></div>
+  </section>
+  <section id="cu" class="hide">
+   <div class="hd"><div><h1>Customers</h1><p>Manage your customer list</p></div></div>
+   <form class="c f" id="cf"><input name="n" placeholder="Customer name" aria-label="Customer name" required><input name="e" type="email" placeholder="Email" aria-label="Email" required><select name="s" aria-label="Status"><option>Active</option><option>Lead</option><option>Inactive</option></select><button class="btn" type="submit">Add customer</button></form>
+   <p class="msg" id="cm" role="status"></p>
+   <div class="c"><div class="tools"><input id="cq" type="search" placeholder="Search customers" aria-label="Search customers"><select id="cs" aria-label="Filter status"><option value="">All statuses</option><option>Active</option><option>Lead</option><option>Inactive</option></select></div><div class="sc"><table><thead><tr><th>Customer</th><th>Email</th><th>Total spent</th><th>Status</th><th></th></tr></thead><tbody id="ct"></tbody></table></div></div>
+  </section>
+  <section id="or" class="hide">
+   <div class="hd"><div><h1>Orders</h1><p>Orders overview</p></div></div>
+   <div class="stat" id="os"></div>
+   <div class="c"><div class="tools"><input id="oq" type="search" placeholder="Search orders or customers" aria-label="Search orders"><select id="of" aria-label="Filter status"><option value="">All statuses</option><option>Processing</option><option>Shipped</option><option>Delivered</option><option>Cancelled</option></select></div><div class="sc"><table><thead><tr><th><button data-s="id">Order</button></th><th><button data-s="cu">Customer</button></th><th><button data-s="am">Amount</button></th><th><button data-s="dt">Date</button></th><th>Status</th></tr></thead><tbody id="ot"></tbody></table></div></div>
+  </section>
+ </main>
+</div>
+<script>
+const $=s=>document.querySelector(s),usd=n=>"$"+Math.round(n).toLocaleString("en-US");
+const M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const REV=[41,44,39,52,58,55,63,67,61,72,78,84].map(v=>v*1000),TGT=[40,45,45,50,55,58,60,65,66,70,75,80].map(v=>v*1000);
+const CAT=[["Electronics",34,"#8b5cf6"],["Apparel",24,"#38bdf8"],["Home",20,"#34d399"],["Beauty",13,"#fbbf24"],["Other",9,"#fb7185"]];
+const REG=[["North",182],["East",146],["South",121],["West",98]],PRO=[["Wireless speaker",412],["Running shoes",366],["Desk organiser",301],["Skin care set",254],["Smart bottle",198]];
+let CUS=[["Harbor Cafe","orders@harborcafe.example",12400,"Active"],["Delta Print","hello@deltaprint.example",8600,"Active"],["Orbit Studio","team@orbitstudio.example",31500,"Active"],["Kiln & Co","info@kilnco.example",5400,"Inactive"],["Maple Dental","desk@mapledental.example",22000,"Active"],["Brightside Gym","manager@brightside.example",9800,"Lead"],["Northwind Tours","book@northwind.example",41000,"Active"],["Pixel Barn","studio@pixelbarn.example",7200,"Lead"]].map(r=>({n:r[0],e:r[1],t:r[2],s:r[3]}));
+let ORD=CUS.concat(CUS.slice(0,4)).map((c,i)=>({id:5001+i,cu:c.n,am:[1240,860,3150,540,2200,980,4100,720,1330,2750,610,1980][i],st:["Delivered","Shipped","Delivered","Cancelled","Processing","Shipped","Delivered","Processing","Delivered","Shipped","Processing","Delivered"][i],dt:new Date(2026,9,30-i*2).toISOString().slice(0,10)}));
+let sort={k:"id",dir:-1};
+const tip=(box,html,x,y)=>{let t=box.querySelector(".tip");if(!t){t=document.createElement("div");t.className="tip";box.appendChild(t)}t.innerHTML=html;t.style.left=x+"px";t.style.top=y+"px";t.style.opacity=1};
+const hideTip=box=>{const t=box.querySelector(".tip");if(t)t.style.opacity=0};
+function kpis(){const n=+document.querySelector("[data-r][aria-pressed=true]").dataset.r,r=REV.slice(-n),tot=r.reduce((a,b)=>a+b,0),g=(r[n-1]-r[n-2])/r[n-2]*100;
+const paid=ORD.filter(o=>o.st!=="Cancelled").length;
+$("#kp").innerHTML=[["Revenue",usd(tot),`<em class="up">+${g.toFixed(1)}% vs last month</em>`],["Orders",(n*118+paid).toLocaleString("en-US"),`<em class="up">+6.4% vs last period</em>`],["Customers",(1240+CUS.length*3).toLocaleString("en-US"),`<em class="up">+${CUS.filter(c=>c.s==="Lead").length+18} new this month</em>`],["Conversion",(3.2+n/40).toFixed(1)+"%",`<em class="dn">-0.2% vs last month</em>`]].map(([a,b,c])=>`<div class="k"><small>${a}</small><b>${b}</b>${c}</div>`).join("");
+$("#rt").textContent=usd(tot)+" in "+n+" months"}
+function line(){const n=+document.querySelector("[data-r][aria-pressed=true]").dataset.r,r=REV.slice(-n),lb=M.slice(12-n),W=640,H=240,pl=44,pb=26,mx=Math.max(...r)*1.12,box=$("#rv");
+const X=i=>pl+i*(W-pl-14)/(n-1),Y=v=>H-pb-v/mx*(H-pb-12);let g="";
+for(let i=0;i<=4;i++){const y=12+(H-pb-12)*i/4;g+=`<line x1="${pl}" x2="${W-6}" y1="${y}" y2="${y}" stroke="#262f63"/><text x="${pl-8}" y="${y+4}" text-anchor="end" font-size="10" fill="#9aa3d4">${Math.round(mx*(1-i/4)/1000)}k</text>`}
+const pts=r.map((v,i)=>`${X(i)},${Y(v)}`).join(" ");
+box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block"><defs><linearGradient id="ar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8b5cf6" stop-opacity=".5"/><stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/></linearGradient></defs>${g}<polygon points="${X(0)},${H-pb} ${pts} ${X(n-1)},${H-pb}" fill="url(#ar)"/><polyline points="${pts}" fill="none" stroke="#a78bfa" stroke-width="3" stroke-linejoin="round"/>${r.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="5" fill="#0a0f24" stroke="#a78bfa" stroke-width="2.5" data-i="${i}" tabindex="0" aria-label="${lb[i]} ${usd(v)}"/><text x="${X(i)}" y="${H-8}" text-anchor="middle" font-size="10" fill="#9aa3d4">${lb[i]}</text>`).join("")}</svg>`;
+box.querySelectorAll("circle").forEach(c=>{const i=+c.dataset.i,show=()=>{const s=box.querySelector("svg").getBoundingClientRect();tip(box,`<b>${lb[i]}</b><br>${usd(r[i])}`,X(i)/W*s.width,Y(r[i])/H*s.height)};c.onmouseenter=show;c.onfocus=show;c.onmouseleave=()=>hideTip(box);c.onblur=()=>hideTip(box)})}
+function bars(){const n=+document.querySelector("[data-r][aria-pressed=true]").dataset.r,r=REV.slice(-n),t=TGT.slice(-n),lb=M.slice(12-n),W=640,H=230,pl=44,pb=26,mx=Math.max(...r,...t)*1.12,bw=(W-pl-10)/n,box=$("#mp");
+const Y=v=>H-pb-v/mx*(H-pb-10);let g="";for(let i=0;i<=3;i++){const y=10+(H-pb-10)*i/3;g+=`<line x1="${pl}" x2="${W-6}" y1="${y}" y2="${y}" stroke="#262f63"/><text x="${pl-8}" y="${y+4}" text-anchor="end" font-size="10" fill="#9aa3d4">${Math.round(mx*(1-i/3)/1000)}k</text>`}
+box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block">${g}${r.map((v,i)=>{const x=pl+i*bw+bw*.18,w=bw*.28,hit=v>=t[i];return`<rect x="${x}" y="${Y(t[i])}" width="${w}" height="${H-pb-Y(t[i])}" rx="5" fill="#3a447f" data-i="${i}"/><rect x="${x+w+4}" y="${Y(v)}" width="${w}" height="${H-pb-Y(v)}" rx="5" fill="${hit?"#8b5cf6":"#fb7185"}" data-i="${i}"/><text x="${x+w+2}" y="${H-8}" text-anchor="middle" font-size="10" fill="#9aa3d4">${lb[i]}</text>`}).join("")}</svg><div style="display:flex;gap:16px;font-size:.84rem;color:#9aa3d4;margin-top:6px"><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3a447f;margin-right:6px"></i>Target</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#8b5cf6;margin-right:6px"></i>Revenue</span></div>`;
+box.querySelectorAll("rect[data-i]").forEach(b=>{const i=+b.dataset.i;b.onmouseenter=()=>{const s=box.querySelector("svg").getBoundingClientRect();tip(box,`<b>${lb[i]}</b><br>Revenue ${usd(r[i])}<br>Target ${usd(t[i])}<br>${r[i]>=t[i]?"Target met":"Below target"}`,(pl+i*bw+bw*.5)/W*s.width,Y(Math.max(r[i],t[i]))/H*s.height)};b.onmouseleave=()=>hideTip(box)})}
+function donut(){const tot=CAT.reduce((a,c)=>a+c[1],0);let a=-Math.PI/2,h="";const pt=(an,rd)=>`${(100+rd*Math.cos(an)).toFixed(2)} ${(100+rd*Math.sin(an)).toFixed(2)}`;
+CAT.forEach(([n,v,c])=>{const b=a+v/tot*2*Math.PI,l=b-a>Math.PI?1:0;h+=`<path d="M${pt(a,86)} A86 86 0 ${l} 1 ${pt(b,86)} L${pt(b,56)} A56 56 0 ${l} 0 ${pt(a,56)}Z" fill="${c}" stroke="#131a3d" stroke-width="2"><title>${n}: ${v}%</title></path>`;a=b});
+$("#dn").innerHTML=`<svg viewBox="0 0 200 200" style="width:100%;max-width:220px;margin:auto;display:block">${h}<text x="100" y="97" text-anchor="middle" font-size="22" font-weight="800" fill="#eef0ff">${usd(REV.reduce((x,y)=>x+y,0)/1000)}k</text><text x="100" y="116" text-anchor="middle" font-size="10" fill="#9aa3d4">this year</text></svg>`;
+$("#lgd").innerHTML=CAT.map(([n,v,c])=>`<div><i style="background:${c}"></i>${n}<b style="float:right">${v}%</b></div>`).join("")}
+function hbars(id,data,col,unit){const mx=Math.max(...data.map(d=>d[1]));$(id).innerHTML=data.map(([n,v])=>`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:.92rem"><span>${n}</span><b>${v.toLocaleString("en-US")}${unit}</b></div><div style="height:10px;border-radius:99px;background:#0a0f24;overflow:hidden;margin-top:4px"><div style="width:${v/mx*100}%;height:100%;border-radius:99px;background:linear-gradient(90deg,#6d3df0,${col})"></div></div></div>`).join("")}
+function sales(){hbars("#rg",REG,"#a78bfa"," orders");hbars("#tp",PRO,"#38bdf8"," units");const d=ORD.filter(o=>o.st!=="Cancelled"),av=d.reduce((a,o)=>a+o.am,0)/d.length;
+$("#ss").innerHTML=[["Average order",usd(av)],["Best month","Dec ("+usd(REV[11])+")"],["Orders this month",ORD.length],["Cancelled",ORD.filter(o=>o.st==="Cancelled").length],["Target hit",REV.filter((v,i)=>v>=TGT[i]).length+" of 12 months"]].map(([a,b])=>`<span>${a}<b>${b}</b></span>`).join("")}
+function cust(){const q=$("#cq").value.toLowerCase(),f=$("#cs").value;const l=CUS.map((c,i)=>({...c,i})).filter(c=>(!f||c.s===f)&&(c.n+c.e).toLowerCase().includes(q));
+$("#ct").innerHTML=l.length?l.map(c=>`<tr><td><b>${c.n.replace(/[<>&]/g,"")}</b></td><td>${c.e.replace(/[<>&]/g,"")}</td><td>${usd(c.t)}</td><td><button class="pill ${c.s}" data-cs="${c.i}" title="Click to change status">${c.s}</button></td><td><button class="x" data-cd="${c.i}" aria-label="Delete ${c.n.replace(/[<>&"]/g,"")}">×</button></td></tr>`).join(""):`<tr><td colspan="5" style="color:#9aa3d4">No customers match. Clear the search or choose another status.</td></tr>`}
+function ord(){const q=$("#oq").value.toLowerCase(),f=$("#of").value;const l=ORD.filter(o=>(!f||o.st===f)&&(o.cu.toLowerCase().includes(q)||String(o.id).includes(q))).sort((a,b)=>(a[sort.k]>b[sort.k]?1:-1)*sort.dir);
+$("#ot").innerHTML=l.length?l.map(o=>`<tr><td>#${o.id}</td><td>${o.cu}</td><td>${usd(o.am)}</td><td>${o.dt}</td><td><button class="pill ${o.st}" data-os="${o.id}" title="Click to change status">${o.st}</button></td></tr>`).join(""):`<tr><td colspan="5" style="color:#9aa3d4">No orders match. Clear the search or choose another status.</td></tr>`;
+$("#os").innerHTML=["Processing","Shipped","Delivered","Cancelled"].map(s=>`<span>${s}<b>${ORD.filter(o=>o.st===s).length}</b></span>`).join("")}
+const all=()=>{kpis();line();bars();donut();sales();cust();ord()};
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===b));["ov","sa","cu","or"].forEach(v=>$("#"+v).classList.toggle("hide",v!==b.dataset.v))});
+document.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-r]").forEach(x=>x.setAttribute("aria-pressed",x===b));kpis();line();bars()});
+$("#cq").oninput=cust;$("#cs").onchange=cust;$("#oq").oninput=ord;$("#of").onchange=ord;
+document.querySelectorAll("th button").forEach(b=>b.onclick=()=>{sort={k:b.dataset.s,dir:sort.k===b.dataset.s?-sort.dir:1};ord()});
+document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;
+if(t.dataset.cs!==undefined){const c=CUS[+t.dataset.cs],o=["Active","Lead","Inactive"];c.s=o[(o.indexOf(c.s)+1)%3];all()}
+if(t.dataset.cd!==undefined){CUS.splice(+t.dataset.cd,1);all()}
+if(t.dataset.os!==undefined){const o=ORD.find(x=>x.id==t.dataset.os),s=["Processing","Shipped","Delivered","Cancelled"];o.st=s[(s.indexOf(o.st)+1)%4];all()}});
+$("#cf").onsubmit=e=>{e.preventDefault();const f=e.target,n=f.n.value.trim(),em=f.e.value.trim();if(!n||!/^\S+@\S+\.\S+$/.test(em)){$("#cm").textContent="Enter a customer name and a valid email address.";return}
+$("#cm").textContent="";CUS.unshift({n,e:em,t:0,s:f.s.value});f.reset();all()};
+all();
+</script>
+</body>
+</html>

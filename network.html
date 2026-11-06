@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NetOps Console | Network management demo</title>
+<style>
+:root{--navy:#0a3a5f;--blue:#049fd9;--blue2:#0b6fb5;--ice:#eaf4fb;--bg:#f3f7fb;--card:#fff;--ink:#12283d;--mut:#5d7388;--ln:#d8e4ee;--ok:#1f9d55;--warn:#e69a00;--bad:#d1384f;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
+button,input{font:inherit;color:inherit}
+a{color:#bfe6f8}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.demo{background:#fff6dc;color:#6b4a00;border-bottom:1px solid #f0d98a;font-size:.84rem;font-weight:600;padding:7px 16px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.demo a{color:#6b4a00}
+header{background:linear-gradient(90deg,var(--navy),var(--blue2));color:#fff;padding:14px 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{margin:0;font-size:1.2rem;letter-spacing:.02em}
+header .sub{opacity:.85;font-size:.9rem}
+.live{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:.88rem}
+.dot{width:10px;height:10px;border-radius:50%;background:#5df28f;animation:p 2s infinite}
+@keyframes p{70%{box-shadow:0 0 0 9px rgba(93,242,143,0)}0%{box-shadow:0 0 0 0 rgba(93,242,143,.7)}}
+.wrap{max-width:1320px;margin:auto;padding:18px;display:grid;gap:16px}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.k{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:14px 16px;border-left:4px solid var(--blue)}
+.k small{color:var(--mut)}.k b{display:block;font-size:1.65rem;color:var(--navy);letter-spacing:-.02em}
+.k i{font-style:normal;font-size:.82rem;color:var(--mut)}
+.main{display:grid;grid-template-columns:1.55fr 1fr;gap:16px}
+.c{background:var(--card);border:1px solid var(--ln);border-radius:16px;padding:16px;min-width:0}
+.c h2{margin:0 0 10px;font-size:1rem;color:var(--navy);display:flex;justify-content:space-between;gap:8px;align-items:center}
+.c h2 small{font-weight:400;color:var(--mut)}
+svg.topo{width:100%;height:auto;display:block;background:linear-gradient(180deg,#f8fcff,#eef6fc);border-radius:12px;border:1px solid var(--ln)}
+.node{cursor:pointer}
+.node .box{fill:#fff;stroke:#b8cfe0;stroke-width:1.6;transition:stroke .2s,filter .2s}
+.node:hover .box,.node.sel .box{stroke:var(--blue);filter:drop-shadow(0 4px 10px rgba(4,159,217,.35))}
+.node.sel .box{stroke-width:2.6}
+.node text{fill:var(--ink);font-size:11.5px;text-anchor:middle;font-weight:600}
+.node .ip{fill:var(--mut);font-size:10px;font-weight:400}
+.ic{fill:none;stroke:var(--blue2);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.lk{stroke:#9fbcd2;stroke-width:2.2}
+.lk.down{stroke:var(--bad);stroke-dasharray:6 5}
+.fw{stroke:var(--blue);stroke-width:2.4;stroke-dasharray:3 11;animation:f 1s linear infinite}
+@keyframes f{to{stroke-dashoffset:-14}}
+.st{fill:var(--ok)}.st.warn{fill:var(--warn)}.st.down{fill:var(--bad)}
+.side{display:grid;gap:16px;align-content:start}
+dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px}
+dt{color:var(--mut)}dd{margin:0;text-align:right;font-weight:600}
+.btn{border:1px solid var(--blue);background:var(--blue);color:#fff;border-radius:10px;padding:9px 14px;cursor:pointer;font-weight:700;width:100%;margin-top:12px;transition:background .2s,box-shadow .2s}
+.btn:hover{background:var(--blue2);box-shadow:0 6px 18px rgba(4,159,217,.35)}
+.btn.o{background:#fff;color:var(--blue2)}.btn.o:hover{background:var(--ice)}
+.bars{display:grid;gap:10px}
+.bar .t{display:flex;justify-content:space-between;font-size:.88rem}
+.bar .tr{height:9px;border-radius:99px;background:#e3edf5;overflow:hidden;margin-top:3px}
+.bar .tr i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--blue2));transition:width .6s}
+.bar .tr i.hi{background:linear-gradient(90deg,#f5b73b,var(--bad))}
+.bw{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
+.leg{display:flex;gap:14px;font-size:.84rem;color:var(--mut);margin-top:6px}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--ln);white-space:nowrap}
+th{color:var(--mut);font-weight:600;background:#f7fafd}
+tbody tr{cursor:pointer}tbody tr:hover{background:var(--ice)}
+tbody tr.sel{background:#dff1fb}
+.sc{overflow-x:auto}
+.b{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:.85rem}
+.b i{width:9px;height:9px;border-radius:50%;background:var(--ok)}
+.b.warn i{background:var(--warn)}.b.down i{background:var(--bad)}
+.cli{background:#08202f;color:#bfe6f8;border-radius:12px;padding:12px 14px;font:.84rem/1.55 ui-monospace,Menlo,Consolas,monospace;height:250px;overflow:auto}
+.cli pre{margin:0;white-space:pre-wrap}
+.cli .pr{color:#5ad1ff}
+.cl{display:flex;gap:8px;margin-top:8px}
+.cl input{flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--ln);background:#fff;font-family:ui-monospace,Menlo,Consolas,monospace}
+.cl button{width:auto;margin:0;padding:9px 18px}
+.hint{font-size:.82rem;color:var(--mut);margin:6px 0 0}
+.hint code{background:var(--ice);padding:1px 6px;border-radius:6px;cursor:pointer}
+@media(max-width:920px){.main,.bw{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="demo"><span>Simulated demo: all devices, traffic and commands are generated in your browser. It is not connected to a real network or to any Cisco equipment.</span><a href="index.html">Back to portfolio</a></div>
+<header><h1>NetOps Console</h1><span class="sub">Campus network, building A</span><div class="live"><span class="dot"></span><span id="clock">Live</span></div></header>
+<div class="wrap">
+ <section class="kp" aria-label="Network statistics">
+  <div class="k"><small>Devices online</small><b id="k1">0</b><i id="k1s"></i></div>
+  <div class="k"><small>Inbound traffic</small><b id="k2">0 Mbps</b><i>Combined uplinks</i></div>
+  <div class="k"><small>Outbound traffic</small><b id="k3">0 Mbps</b><i>Combined uplinks</i></div>
+  <div class="k"><small>Average latency</small><b id="k4">0 ms</b><i>Across reachable devices</i></div>
+  <div class="k"><small>Active alerts</small><b id="k5">0</b><i>Down or slow devices</i></div>
+ </section>
+ <div class="main">
+  <section class="c"><h2>Network topology <small>Select a device</small></h2><svg class="topo" id="topo" viewBox="0 0 760 420" role="img" aria-label="Network topology diagram"></svg></section>
+  <div class="side">
+   <section class="c" aria-live="polite"><h2>Device details</h2><dl id="det"></dl><button class="btn" id="tg" type="button">Shut down uplink</button></section>
+   <section class="c"><h2>Link utilization</h2><div class="bars" id="ut"></div></section>
+  </div>
+ </div>
+ <div class="bw">
+  <section class="c"><h2>Bandwidth monitor <small>Last 60 seconds</small></h2><svg id="ch" viewBox="0 0 520 160" style="width:100%;display:block"></svg><div class="leg"><span><i style="background:#049fd9"></i>Inbound</span><span><i style="background:#0a3a5f"></i>Outbound</span></div></section>
+  <section class="c"><h2>CLI <small>CCNA-style commands</small></h2><div class="cli" id="cli" role="log" aria-live="polite"></div><form class="cl" id="cf"><input id="ci" autocomplete="off" aria-label="Command" placeholder="Type a command"><button class="btn" type="submit">Run</button></form><p class="hint">Try <code>show ip interface brief</code>, <code>show vlan brief</code>, <code>ping 192.168.20.10</code> or <code>help</code></p></section>
+ </div>
+ <section class="c"><h2>Connected devices <small id="cnt"></small></h2><div class="sc"><table><thead><tr><th>Device</th><th>Type</th><th>IP address</th><th>VLAN</th><th>Port</th><th>Status</th><th>Latency</th></tr></thead><tbody id="tb"></tbody></table></div></section>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const D=[
+{id:"r1",n:"R1",t:"Router",ip:"192.168.1.1",vl:"-",x:380,y:62,port:"Gi0/2 to ISP"},
+{id:"s1",n:"SW1",t:"Switch",ip:"192.168.10.2",vl:"10",x:180,y:190,up:"r1",port:"Gi0/0 on R1",rp:"Gi0/0",ri:"192.168.10.1"},
+{id:"s2",n:"SW2",t:"Switch",ip:"192.168.20.2",vl:"20",x:580,y:190,up:"r1",port:"Gi0/1 on R1",rp:"Gi0/1",ri:"192.168.20.1"},
+{id:"a",n:"PC-A",t:"Workstation",ip:"192.168.10.11",vl:"10",x:80,y:340,up:"s1",port:"Fa0/1 on SW1"},
+{id:"b",n:"PC-B",t:"Workstation",ip:"192.168.10.12",vl:"10",x:200,y:340,up:"s1",port:"Fa0/2 on SW1"},
+{id:"p",n:"Printer",t:"Printer",ip:"192.168.10.30",vl:"10",x:315,y:340,up:"s1",port:"Fa0/3 on SW1"},
+{id:"w",n:"Web-Srv",t:"Server",ip:"192.168.20.10",vl:"20",x:480,y:340,up:"s2",port:"Fa0/1 on SW2"},
+{id:"f",n:"File-Srv",t:"Server",ip:"192.168.20.11",vl:"20",x:595,y:340,up:"s2",port:"Fa0/2 on SW2"},
+{id:"ap",n:"Wi-Fi AP",t:"Access point",ip:"192.168.20.40",vl:"20",x:700,y:340,up:"s2",port:"Fa0/3 on SW2"}];
+D.forEach(d=>{d.on=true;d.lat=r(1,9);d.load=r(8,45)});
+function r(a,b){return Math.round(a+Math.random()*(b-a))}
+const by=id=>D.find(d=>d.id===id);
+const reach=d=>d.on&&(!d.up||reach(by(d.up)));
+const stat=d=>!reach(d)?"down":(d.lat>35?"warn":"ok");
+const lbl={ok:"Up",warn:"Slow",down:"Down"};
+let sel="r1",hin=Array(60).fill(300),hout=Array(60).fill(160);
+const ICON={Router:'<circle class="ic" cx="0" cy="-2" r="11"/><path class="ic" d="M-5 -6l-4 4 4 4M5 -6l4 4-4 4M-9 -2h18"/>',Switch:'<rect class="ic" x="-14" y="-10" width="28" height="16" rx="3"/><path class="ic" d="M-8 -4h2M-3 -4h2M2 -4h2M7 -4h2M-8 1h2M-3 1h2M2 1h2M7 1h2"/>',Workstation:'<rect class="ic" x="-11" y="-11" width="22" height="14" rx="2"/><path class="ic" d="M-6 8h12M0 3v5"/>',Printer:'<rect class="ic" x="-11" y="-3" width="22" height="11" rx="2"/><path class="ic" d="M-6 -3v-8h12v8M-6 8v-6h12v6"/>',Server:'<rect class="ic" x="-10" y="-11" width="20" height="8" rx="2"/><rect class="ic" x="-10" y="0" width="20" height="8" rx="2"/><path class="ic" d="M-5 -7h2M-5 4h2"/>',"Access point":'<path class="ic" d="M-11 -4a16 16 0 0122 0M-7 0a10 10 0 0114 0"/><circle class="ic" cx="0" cy="6" r="2"/>'};
+const OUT=[];
+function out(h,cls){OUT.push(`<pre${cls?` class="${cls}"`:""}>${h}</pre>`);$("#cli").innerHTML=OUT.slice(-60).join("");$("#cli").scrollTop=1e6}
+function topo(){let h="";
+D.forEach(d=>{if(d.up){const u=by(d.up),dn=!reach(d);h+=`<line class="lk ${dn?"down":""}" x1="${u.x}" y1="${u.y+28}" x2="${d.x}" y2="${d.y-28}"/>`;if(!dn)h+=`<line class="fw" x1="${u.x}" y1="${u.y+28}" x2="${d.x}" y2="${d.y-28}"/>`}});
+D.forEach(d=>{const s=stat(d),w=d.t==="Router"||d.t==="Switch"?120:96;h+=`<g class="node ${d.id===sel?"sel":""}" data-id="${d.id}" tabindex="0" role="button" aria-label="${d.n}, ${d.t}, ${lbl[s]}"><rect class="box" x="${d.x-w/2}" y="${d.y-28}" width="${w}" height="56" rx="12"/><g transform="translate(${d.x-w/2+22} ${d.y})">${ICON[d.t]}</g><circle class="st ${s==="ok"?"":s}" cx="${d.x+w/2-12}" cy="${d.y-16}" r="4.5"/><text x="${d.x+8}" y="${d.y-1}">${d.n}</text><text class="ip" x="${d.x+8}" y="${d.y+14}">${d.ip}</text></g>`});
+h+=`<text x="380" y="18" text-anchor="middle" fill="#5d7388" font-size="11">Internet</text><path d="M380 22v10" stroke="#9fbcd2" stroke-width="2"/>`;$("#topo").innerHTML=h}
+function det(){const d=by(sel),s=stat(d);$("#det").innerHTML=`<dt>Name</dt><dd>${d.n}</dd><dt>Type</dt><dd>${d.t}</dd><dt>IP address</dt><dd>${d.ip}</dd><dt>VLAN</dt><dd>${d.vl}</dd><dt>Connected to</dt><dd>${d.port}</dd><dt>Status</dt><dd class="b ${s}" style="justify-content:flex-end"><i></i>${s==="down"?(d.on?"Unreachable":"Shut down"):s==="warn"?"High latency":"Up"}</dd><dt>Latency</dt><dd>${s==="down"?"No reply":d.lat+" ms"}</dd><dt>Utilization</dt><dd>${s==="down"?"0%":d.load+"%"}</dd>`;$("#tg").textContent=d.on?(d.up?"Shut down uplink":"Simulate router failure"):"Bring device back up";$("#tg").className="btn"+(d.on?"":" o")}
+function table(){$("#tb").innerHTML=D.map(d=>{const s=stat(d);return`<tr data-id="${d.id}" class="${d.id===sel?"sel":""}"><td><b>${d.n}</b></td><td>${d.t}</td><td>${d.ip}</td><td>${d.vl}</td><td>${d.port}</td><td><span class="b ${s}"><i></i>${lbl[s]}</span></td><td>${s==="down"?"-":d.lat+" ms"}</td></tr>`}).join("");$("#cnt").textContent=D.filter(d=>reach(d)).length+" of "+D.length+" reachable"}
+function util(){const L=[["R1 to SW1 (Gi0/0)","s1"],["R1 to SW2 (Gi0/1)","s2"],["R1 to ISP (Gi0/2)","r1"]];
+$("#ut").innerHTML=L.map(([n,id])=>{const d=by(id),up=reach(d);let v=0;if(up){v=id==="r1"?Math.min(95,Math.round(D.filter(x=>reach(x)&&x.up).reduce((a,x)=>a+x.load,0)/4)):Math.min(95,Math.round(D.filter(x=>x.up===id&&reach(x)).reduce((a,x)=>a+x.load,0)/2.2+8))}
+return`<div class="bar"><div class="t"><span>${n}</span><b>${up?v+"%":"Down"}</b></div><div class="tr"><i class="${v>75?"hi":""}" style="width:${v}%"></i></div></div>`}).join("")}
+function chart(){const mx=Math.max(...hin,...hout,400)*1.1,W=520,H=160,pl=34,pb=14;
+const pt=a=>a.map((v,i)=>`${(pl+i/59*(W-pl-4)).toFixed(1)},${(H-pb-v/mx*(H-pb-8)).toFixed(1)}`).join(" ");let g="";
+for(let i=0;i<=4;i++){const y=8+(H-pb-8)*i/4;g+=`<line x1="${pl}" x2="${W}" y1="${y}" y2="${y}" stroke="#e3edf5"/><text x="${pl-5}" y="${y+3}" text-anchor="end" font-size="9" fill="#5d7388">${Math.round(mx*(1-i/4))}</text>`}
+$("#ch").innerHTML=g+`<polyline points="${pl},${H-pb} ${pt(hin)} ${W-4},${H-pb}" fill="rgba(4,159,217,.15)"/><polyline points="${pt(hin)}" fill="none" stroke="#049fd9" stroke-width="2.2"/><polyline points="${pt(hout)}" fill="none" stroke="#0a3a5f" stroke-width="2.2"/><text x="${pl}" y="${H}" font-size="9" fill="#5d7388">Mbps</text>`}
+function tick(){D.forEach(d=>{d.lat=Math.max(1,Math.min(80,d.lat+r(-3,3)));d.load=Math.max(3,Math.min(95,d.load+r(-6,6)))});
+if(Math.random()<.04){const d=D[r(3,8)];d.lat=r(40,70)}
+const up=D.filter(d=>reach(d)),tot=up.filter(d=>d.up).reduce((a,d)=>a+d.load,0);
+const i=Math.round(tot*5.2+r(0,30)),o=Math.round(tot*2.6+r(0,20));hin.push(i);hin.shift();hout.push(o);hout.shift();
+$("#k1").textContent=`${up.length}/${D.length}`;$("#k1s").textContent=up.length===D.length?"All devices reachable":(D.length-up.length)+" unreachable";$("#k2").textContent=i+" Mbps";$("#k3").textContent=o+" Mbps";$("#k4").textContent=(up.length?Math.round(up.reduce((a,d)=>a+d.lat,0)/up.length):0)+" ms";$("#k5").textContent=D.filter(d=>stat(d)!=="ok").length;
+$("#clock").textContent="Live · "+new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
+topo();det();table();util();chart()}
+function pick(id){sel=id;topo();det();table()}
+document.addEventListener("click",e=>{const n=e.target.closest("[data-id]");if(n)pick(n.dataset.id);const c=e.target.closest("code");if(c){$("#ci").value=c.textContent;$("#ci").focus()}});
+document.addEventListener("keydown",e=>{const t=e.target;if((e.key==="Enter"||e.key===" ")&&t.dataset&&t.dataset.id){e.preventDefault();pick(t.dataset.id)}});
+$("#tg").onclick=()=>{const d=by(sel);d.on=!d.on;out(`%LINK-${d.on?"3-UPDOWN":"5-CHANGED"}: ${d.n} ${d.on?"changed state to up":"administratively down"}`,d.on?"":"");tick()};
+const pad=(s,n)=>String(s).padEnd(n);
+function cmd(c){c=c.trim();out(`<span class="pr">R1#</span> ${c.replace(/[<>&]/g,"")}`);const l=c.toLowerCase();
+if(!l)return;
+if(l==="help"||l==="?"){out("Available commands:\n  show ip interface brief\n  show vlan brief\n  show interfaces status\n  ping &lt;ip address&gt;\n  clear");return}
+if(l==="clear"){OUT.length=0;$("#cli").innerHTML="";return}
+if(/^sh(ow)? ip int(erface)? b(rief)?$/.test(l)){const rows=[["GigabitEthernet0/0","192.168.10.1","s1"],["GigabitEthernet0/1","192.168.20.1","s2"],["GigabitEthernet0/2","203.0.113.2","r1"]];
+out(pad("Interface",22)+pad("IP-Address",16)+pad("Status",24)+"Protocol\n"+rows.map(([n,ip,id])=>{const u=reach(by(id));return pad(n,22)+pad(ip,16)+pad(u?"up":"administratively down",24)+(u?"up":"down")}).join("\n"));return}
+if(/^sh(ow)? vlan b(rief)?$/.test(l)){out(pad("VLAN",6)+pad("Name",12)+pad("Status",10)+"Devices\n"+pad(10,6)+pad("USERS",12)+pad("active",10)+D.filter(d=>d.vl==="10").map(d=>d.n).join(", ")+"\n"+pad(20,6)+pad("SERVERS",12)+pad("active",10)+D.filter(d=>d.vl==="20").map(d=>d.n).join(", "));return}
+if(/^sh(ow)? int(erfaces)? status$/.test(l)){out(pad("Port",8)+pad("Device",12)+pad("Status",12)+"VLAN\n"+D.filter(d=>d.up&&d.up!=="r1").map(d=>pad(d.port.split(" ")[0],8)+pad(d.n,12)+pad(reach(d)?"connected":"notconnect",12)+d.vl).join("\n"));return}
+const m=l.match(/^ping\s+(\d+\.\d+\.\d+\.\d+)$/);
+if(m){const d=D.find(x=>x.ip===m[1]||x.ri===m[1]);if(!d){out(`Sending 5, 100-byte ICMP Echos to ${m[1]}, timeout is 2 seconds:\n.....\nSuccess rate is 0 percent (0/5)`);return}
+const u=reach(d);out(`Sending 5, 100-byte ICMP Echos to ${m[1]}, timeout is 2 seconds:\n${u?"!!!!!":"....."}\nSuccess rate is ${u?100:0} percent (${u?5:0}/5)${u?`, round-trip min/avg/max = ${Math.max(1,d.lat-1)}/${d.lat}/${d.lat+3} ms`:""}`);return}
+out("% Invalid input detected. Type <b>help</b> to list the commands in this demo.")}
+$("#cf").onsubmit=e=>{e.preventDefault();cmd($("#ci").value);$("#ci").value=""};
+out("NetOps Console simulated CLI. Type help for the list of commands.");
+tick();setInterval(tick,1500);
+</script>
+</body>
+</html>
