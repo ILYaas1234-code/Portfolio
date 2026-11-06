@@ -15,9 +15,9 @@ input,button{font:inherit;border-radius:10px;padding:12px 14px}input{width:100%;
 button{border:0;background:linear-gradient(110deg,#598cff,#713de8);color:white;font-weight:700;cursor:pointer}button:disabled{opacity:.6;cursor:wait}
 form{display:grid;gap:12px;max-width:420px}.hidden{display:none!important}#status{min-height:24px;color:#9fe8b3}
 .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
-table{width:100%;border-collapse:collapse;min-width:700px}th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line);vertical-align:top}th{color:#b8c9ed}
+table{width:100%;border-collapse:collapse;min-width:980px}th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line);vertical-align:top}th{color:#b8c9ed}
 td.message{white-space:pre-wrap;min-width:230px;max-width:420px;overflow-wrap:anywhere}
-.del{background:#8c263d;padding:8px 12px}.tablewrap{overflow-x:auto}.empty{padding:30px;text-align:center;color:var(--mut)}
+.del{background:#8c263d;padding:8px 12px}.act{padding:8px 11px;margin:3px;background:#244c86}.approved{background:#176b52}.tablewrap{overflow-x:auto}.empty{padding:30px;text-align:center;color:var(--mut)}.filters{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px}.filters input{max-width:340px}.pill{display:inline-block;padding:3px 9px;border-radius:99px;background:#26395f;font-size:12px}.pill.yes{background:#176b52}.pill.no{background:#713b28}
 @media(max-width:600px){main{margin:24px auto}.panel{padding:17px}}
 </style>
 </head>
@@ -31,7 +31,7 @@ td.message{white-space:pre-wrap;min-width:230px;max-width:420px;overflow-wrap:an
  </section>
  <section class="panel hidden" id="dashboard">
   <div class="toolbar"><div><h2>Inbox</h2><span class="muted" id="count">Loading messages…</span></div><div><button id="refresh">Refresh</button> <button id="logout">Sign out</button></div></div>
-  <div class="tablewrap"><table><thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Subject</th><th>Message</th><th>Action</th></tr></thead><tbody id="rows"></tbody></table></div>
+  <div class="filters"><input id="search" type="search" placeholder="Search name, email, subject or message"><select id="view" aria-label="Filter messages"><option value="all">All messages</option><option value="pending">Pending approval</option><option value="approved">Published</option><option value="unread">Unread</option></select></div><div class="tablewrap"><table><thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Subject</th><th>Message</th><th>Status</th><th>Actions</th></tr></thead><tbody id="rows"></tbody></table></div>
   <div id="empty" class="empty hidden">No messages yet.</div>
   <p id="dashStatus" class="muted" role="status"></p>
  </section>
@@ -39,52 +39,56 @@ td.message{white-space:pre-wrap;min-width:230px;max-width:420px;overflow-wrap:an
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script>
-const ADMIN_UID="c29f6e85-0171-4c7d-9e03-7d5d969fe788";
+const ADMIN_EMAIL="ilyaasyaxye11@gmail.com";
 const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const $=id=>document.getElementById(id);
 const loginPanel=$("loginPanel"),dashboard=$("dashboard");
+let allMessages=[];
 function say(t){$("status").textContent=t}
 function dashSay(t){$("dashStatus").textContent=t}
 function safeCell(value){const td=document.createElement("td");td.textContent=value??"";return td}
 async function showSession(){
  const {data:{session}}=await client.auth.getSession();
  if(!session){loginPanel.classList.remove("hidden");dashboard.classList.add("hidden");return}
- if(session.user.id!==ADMIN_UID){await client.auth.signOut();loginPanel.classList.remove("hidden");dashboard.classList.add("hidden");say("This account is not authorized as the portfolio admin.");return}
+ if((session.user.email||"").toLowerCase()!==ADMIN_EMAIL){await client.auth.signOut();loginPanel.classList.remove("hidden");dashboard.classList.add("hidden");say("This account is not authorized as the portfolio admin.");return}
  loginPanel.classList.add("hidden");dashboard.classList.remove("hidden");await loadMessages();
 }
 async function loadMessages(){
  dashSay("Loading…");$("rows").replaceChildren();
- const {data,error}=await client.from("messages").select("id,name,email,subject,message,created_at").order("created_at",{ascending:false});
- if(error){dashSay("Could not load messages. Check the Supabase table and RLS policies.");console.error(error);return}
- $("count").textContent=data.length+" message(s)";
- $("empty").classList.toggle("hidden",data.length!==0);
- for(const m of data){
+ const {data,error}=await client.from("messages").select("id,name,email,subject,message,created_at,is_approved,is_read").order("created_at",{ascending:false});
+ if(error){dashSay("Could not load messages. Check the admin SELECT policy and exact admin email.");console.error(error);return}
+ allMessages=data||[];renderMessages();dashSay("");
+}
+function renderMessages(){
+ const term=$("search").value.trim().toLowerCase(),view=$("view").value;
+ const filtered=allMessages.filter(m=>{
+  const text=[m.name,m.email,m.subject,m.message].join(" ").toLowerCase();
+  const matches=text.includes(term);
+  const mode=view==="pending"?!m.is_approved:view==="approved"?!!m.is_approved:view==="unread"?!m.is_read:true;
+  return matches&&mode;
+ });
+ $("rows").replaceChildren();$("count").textContent=allMessages.length+" total · "+filtered.length+" shown";
+ $("empty").classList.toggle("hidden",filtered.length!==0);
+ for(const m of filtered){
   const tr=document.createElement("tr");
-  const date=m.created_at?new Date(m.created_at).toLocaleString():"—";
-  tr.append(safeCell(date),safeCell(m.name),safeCell(m.email),safeCell(m.subject));
+  tr.append(safeCell(m.created_at?new Date(m.created_at).toLocaleString():"—"),safeCell(m.name),safeCell(m.email),safeCell(m.subject));
   const msg=safeCell(m.message);msg.className="message";tr.append(msg);
-  const action=document.createElement("td"),btn=document.createElement("button");
-  btn.className="del";btn.textContent="Delete";
-  btn.addEventListener("click",async()=>{
-   if(!confirm("Delete this message permanently?"))return;
-   btn.disabled=true;
-   const {error}=await client.from("messages").delete().eq("id",m.id);
-   if(error){btn.disabled=false;dashSay("Delete failed. Check admin delete policy.");console.error(error);return}
-   tr.remove();$("count").textContent=Math.max(0,(Number.parseInt($("count").textContent)||0)-1)+" message(s)";
-   if(!$("rows").children.length)$("empty").classList.remove("hidden");
-   dashSay("Message deleted.");
-  });
-  action.append(btn);tr.append(action);$("rows").append(tr);
+  const status=safeCell("");status.append(Object.assign(document.createElement("span"),{className:"pill "+(m.is_approved?"yes":"no"),textContent:m.is_approved?"Published":"Pending"}));
+  status.append(document.createTextNode(" "));
+  status.append(Object.assign(document.createElement("span"),{className:"pill "+(m.is_read?"yes":"no"),textContent:m.is_read?"Read":"Unread"}));tr.append(status);
+  const actions=document.createElement("td");
+  const addAction=(label,cls,patch)=>{const b=document.createElement("button");b.className="act "+(cls||"");b.textContent=label;b.addEventListener("click",async()=>{b.disabled=true;dashSay("Saving…");const {error}=await client.from("messages").update(patch).eq("id",m.id);b.disabled=false;if(error){dashSay("Update failed. Check the admin UPDATE policy.");console.error(error);return}Object.assign(m,patch);renderMessages();dashSay("Message updated.")});actions.append(b)};
+  addAction(m.is_approved?"Hide":"Approve",m.is_approved?"":"approved",{is_approved:!m.is_approved});
+  addAction(m.is_read?"Mark unread":"Mark read","",{is_read:!m.is_read});
+  const del=document.createElement("button");del.className="del";del.textContent="Delete";del.addEventListener("click",async()=>{if(!confirm("Delete this message permanently?"))return;del.disabled=true;const {error}=await client.from("messages").delete().eq("id",m.id);if(error){del.disabled=false;dashSay("Delete failed. Check admin DELETE policy.");console.error(error);return}allMessages=allMessages.filter(x=>x.id!==m.id);renderMessages();dashSay("Message deleted.")});actions.append(del);tr.append(actions);$("rows").append(tr);
  }
- dashSay("");
 }
 $("loginForm").addEventListener("submit",async e=>{
  e.preventDefault();const f=e.currentTarget,btn=$("loginBtn");btn.disabled=true;say("Signing in…");
- const {error}=await client.auth.signInWithPassword({email:f.email.value.trim(),password:f.password.value});
- btn.disabled=false;
- if(error){say("Sign in failed. Check your email and password.");return}
- say("");await showSession();
+ const {error}=await client.auth.signInWithPassword({email:f.email.value.trim(),password:f.password.value});btn.disabled=false;
+ if(error){say("Sign in failed. Check your email and password.");return}say("");await showSession();
 });
+$("search").addEventListener("input",renderMessages);$("view").addEventListener("change",renderMessages);
 $("refresh").addEventListener("click",loadMessages);
 $("logout").addEventListener("click",async()=>{await client.auth.signOut();await showSession()});
 showSession();
