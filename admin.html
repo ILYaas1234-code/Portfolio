@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin | Ilyas Ibrahim Yusuf</title>
+<meta name="color-scheme" content="dark">
+<style>
+:root{color-scheme:dark;--bg:#02040a;--panel:#0c1d44;--line:rgba(120,160,255,.2);--blue:#2d7bff;--white:#f4f7ff;--mut:#9fb0d3}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#102453,#02040a 65%);color:var(--white);font:15px/1.6 system-ui,sans-serif;min-height:100vh}
+main{width:min(1050px,92%);margin:50px auto}.top{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:28px}
+h1{font-size:clamp(1.6rem,4vw,2.3rem);margin:0}.muted{color:var(--mut)}a{color:#8db8ff}
+.panel{background:rgba(12,29,68,.75);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:0 18px 60px #0005}
+input,button{font:inherit;border-radius:10px;padding:12px 14px}input{width:100%;background:#020817;color:white;border:1px solid var(--line)}
+button{border:0;background:linear-gradient(110deg,#598cff,#713de8);color:white;font-weight:700;cursor:pointer}button:disabled{opacity:.6;cursor:wait}
+form{display:grid;gap:12px;max-width:420px}.hidden{display:none!important}#status{min-height:24px;color:#9fe8b3}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+table{width:100%;border-collapse:collapse;min-width:700px}th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line);vertical-align:top}th{color:#b8c9ed}
+td.message{white-space:pre-wrap;min-width:230px;max-width:420px;overflow-wrap:anywhere}
+.del{background:#8c263d;padding:8px 12px}.tablewrap{overflow-x:auto}.empty{padding:30px;text-align:center;color:var(--mut)}
+@media(max-width:600px){main{margin:24px auto}.panel{padding:17px}}
+</style>
+</head>
+<body>
+<main>
+ <div class="top"><div><h1>Admin Dashboard</h1><div class="muted">ILYAS IBRAHIM YUSUF · Contact messages</div></div><a href="index.html">← Back to portfolio</a></div>
+ <section class="panel" id="loginPanel">
+  <h2>Admin sign in</h2><p class="muted">Only the authorized admin account can view and delete messages.</p>
+  <form id="loginForm"><input name="email" type="email" placeholder="Admin email" autocomplete="username" required><input name="password" type="password" placeholder="Password" autocomplete="current-password" required><button id="loginBtn">Sign in</button></form>
+  <p id="status" role="status"></p>
+ </section>
+ <section class="panel hidden" id="dashboard">
+  <div class="toolbar"><div><h2>Inbox</h2><span class="muted" id="count">Loading messages…</span></div><div><button id="refresh">Refresh</button> <button id="logout">Sign out</button></div></div>
+  <div class="tablewrap"><table><thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Subject</th><th>Message</th><th>Action</th></tr></thead><tbody id="rows"></tbody></table></div>
+  <div id="empty" class="empty hidden">No messages yet.</div>
+  <p id="dashStatus" class="muted" role="status"></p>
+ </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+const ADMIN_UID="c29f6e85-0171-4c7d-9e03-7d5d969fe788";
+const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+const $=id=>document.getElementById(id);
+const loginPanel=$("loginPanel"),dashboard=$("dashboard");
+function say(t){$("status").textContent=t}
+function dashSay(t){$("dashStatus").textContent=t}
+function safeCell(value){const td=document.createElement("td");td.textContent=value??"";return td}
+async function showSession(){
+ const {data:{session}}=await client.auth.getSession();
+ if(!session){loginPanel.classList.remove("hidden");dashboard.classList.add("hidden");return}
+ if(session.user.id!==ADMIN_UID){await client.auth.signOut();loginPanel.classList.remove("hidden");dashboard.classList.add("hidden");say("This account is not authorized as the portfolio admin.");return}
+ loginPanel.classList.add("hidden");dashboard.classList.remove("hidden");await loadMessages();
+}
+async function loadMessages(){
+ dashSay("Loading…");$("rows").replaceChildren();
+ const {data,error}=await client.from("messages").select("id,name,email,subject,message,created_at").order("created_at",{ascending:false});
+ if(error){dashSay("Could not load messages. Check the Supabase table and RLS policies.");console.error(error);return}
+ $("count").textContent=data.length+" message(s)";
+ $("empty").classList.toggle("hidden",data.length!==0);
+ for(const m of data){
+  const tr=document.createElement("tr");
+  const date=m.created_at?new Date(m.created_at).toLocaleString():"—";
+  tr.append(safeCell(date),safeCell(m.name),safeCell(m.email),safeCell(m.subject));
+  const msg=safeCell(m.message);msg.className="message";tr.append(msg);
+  const action=document.createElement("td"),btn=document.createElement("button");
+  btn.className="del";btn.textContent="Delete";
+  btn.addEventListener("click",async()=>{
+   if(!confirm("Delete this message permanently?"))return;
+   btn.disabled=true;
+   const {error}=await client.from("messages").delete().eq("id",m.id);
+   if(error){btn.disabled=false;dashSay("Delete failed. Check admin delete policy.");console.error(error);return}
+   tr.remove();$("count").textContent=Math.max(0,(Number.parseInt($("count").textContent)||0)-1)+" message(s)";
+   if(!$("rows").children.length)$("empty").classList.remove("hidden");
+   dashSay("Message deleted.");
+  });
+  action.append(btn);tr.append(action);$("rows").append(tr);
+ }
+ dashSay("");
+}
+$("loginForm").addEventListener("submit",async e=>{
+ e.preventDefault();const f=e.currentTarget,btn=$("loginBtn");btn.disabled=true;say("Signing in…");
+ const {error}=await client.auth.signInWithPassword({email:f.email.value.trim(),password:f.password.value});
+ btn.disabled=false;
+ if(error){say("Sign in failed. Check your email and password.");return}
+ say("");await showSession();
+});
+$("refresh").addEventListener("click",loadMessages);
+$("logout").addEventListener("click",async()=>{await client.auth.signOut();await showSession()});
+showSession();
+</script>
+</body>
+</html>
