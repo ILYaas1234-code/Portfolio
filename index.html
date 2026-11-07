@@ -446,7 +446,7 @@ $("#f").addEventListener("submit", async e=>{
 
 // Show only messages explicitly approved by the admin. Visitor email is never selected or displayed.
 (async function loadApprovedMessages(){
- const host=$("approved-message-list");
+const host=$("#approved-message-list");
  try{
   const {data,error}=await supabaseClient.from("messages")
    .select("name,subject,message,created_at")
