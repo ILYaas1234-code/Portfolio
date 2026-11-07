@@ -461,13 +461,13 @@ $("#f").addEventListener("submit", async e=>{
    const meta=document.createElement("small");meta.textContent="From "+(item.name || "Visitor")+(item.created_at?" · "+new Date(item.created_at).toLocaleDateString():"");
    article.append(heading,body,meta);host.append(article);
   }
- }catch(error){
+  }catch(error){
   console.error("Could not load approved messages:",error);
   host.textContent="Public messages are temporarily unavailable.";
  }
-})();
+}
+
+loadApprovedMessages();
 </script>
 </body>
 </html>
-
-</body></html>
